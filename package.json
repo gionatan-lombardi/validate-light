@@ -1,0 +1,22 @@
+{
+  "author": {
+    "name": "Gionatan Lombardi",
+    "url": "https://github.com/gionatan-lombardi"
+  },
+  "name": "validate-light",
+  "description": "A simple HTML form validation script manager.",
+  "version": "0.0.1",
+  "main": "src/validate-light.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gionatan-lombardi/validate-light.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gionatan-lombardi/validate-light/issues"
+  },
+  "keywords": [
+    "JavaScript",
+    "JavaScript Plugin",
+    "form validation"
+  ]
+}
