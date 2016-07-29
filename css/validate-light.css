@@ -2,11 +2,23 @@
    Validate
    ========================================================================== */
 
-.is-hidden {
-  display: none;
+body.has-form {
+  font-family: sans-serif;
 }
 
+.form p {
+	margin: 10px 0;
+}
 
-@media only screen and (min-width: 768px) {
+.form__group {
+	margin: 10px 0
+}
 
+.form__error-block {
+	font-size: 0.8em;
+	color: red;
+}
+
+.is-hidden {
+  display: none;
 }

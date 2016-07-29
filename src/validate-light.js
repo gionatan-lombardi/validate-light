@@ -1,15 +1,15 @@
 /*!
- * modal-light 
+ * Validate-light 
  * v1.0.0
  * (https://github.com/gionatan-lombardi/modal-light)
- * Copyright (c) 2016 Gionatan Lombardi
- * Licensed under the MIT license
+ * Author: Gionatan Lombardi
+ * Free to use, to change, to destroy...
  */
 
 (function(envGlobal) {
 
 'use strict';
-   
+
 // Utility functions
 
 /**
@@ -102,7 +102,9 @@ function closest(node, selector) {
 
 var buildObj = {
 
-  check: {
+  // Private validation methods
+   
+  fieldChecks: {
 
     empty: function empty(value) {
       var value = value.trim();
@@ -168,70 +170,125 @@ var buildObj = {
       errorBlock.classList.add('is-hidden');
   },
 
+  // Public Methods
+  
   validate: function validate() {
 
     var self = this;
 
     self.formFields = self.form.querySelectorAll('input, textarea, select');
 
+    var result = true;
+
     forEachNode(self.formFields, function(field) {
 
-        var validationConfig = [
-          {
-            checkCondition: field.type != 'checkbox' && field.hasAttribute('required'),
-            validationType: self.check.empty(field.value).isEmpty,
-            msg: self.messages.required
-          },
-          {
-            checkCondition: field.type == 'email',
-            validationType: self.check.email(field.value).hasError,
-            msg: self.messages.email
-          },
-          {
-            checkCondition: field.type == 'tel',
-            validationType: self.check.tel(field.value).hasError,
-            msg: self.messages.tel
-          },
-          {
-            checkCondition: field.type == 'checkbox' && field.hasAttribute('required'),
-            validationType: !field.checked,
-            msg: self.messages.required
-          },
+      var validationConfig = [
+        {
+          checkCondition: field.type != 'checkbox' && field.hasAttribute('required'),
+          validationType: self.fieldChecks.empty(field.value).isEmpty,
+          msg: self.messages.required
+        },
+        {
+          checkCondition: field.type == 'email',
+          validationType: self.fieldChecks.email(field.value).hasError,
+          msg: self.messages.email
+        },
+        {
+          checkCondition: field.type == 'tel',
+          validationType: self.fieldChecks.tel(field.value).hasError,
+          msg: self.messages.tel
+        },
+        {
+          checkCondition: field.type == 'checkbox' && field.hasAttribute('required'),
+          validationType: !field.checked,
+          msg: self.messages.required
+        },
+        {
+          checkCondition: field.type == 'radio' && field.hasAttribute('required'),
+          validationType: !self.form.querySelector('input[name="'+field.name+'"]:checked'),
+          msg: self.messages.required
+        },
 
-        ];
+      ];
 
-        var result = validationConfig.every(function(el, i) {
+      (function() {
+        for (var k in self.customChecks) {
+          var dataName = k.charAt(0).toUpperCase() + k.substr(1).toLowerCase();
+          var dataConfig = typeof field.dataset['validate'+dataName] !== "undefined" ? field.dataset['validate'+dataName].split(',') : false ;
+          self.messages[k] = self.form.dataset['msg' + dataName];
+          if (!self.messages[k])
+            throw new Error('ValidateLight - You must define an error message for your new "' + k + '" validation rule. Set it on the form tag adding the data-msg-' + k + ' attribute');
+          validationConfig.push({
+            checkCondition: dataConfig,
+            validationType: !dataConfig ? false : self.customChecks[k](field.value, field, dataConfig).isEmpty ? false : self.customChecks[k](field.value, field, dataConfig).hasError,
+            msg: self.messages[k]
+          })
+        }
+      })();
 
-          if (el.checkCondition) {
-            var formGroup = closest(field, self.options.formBlockSelector);
-            if (el.validationType) {
-              field.classList.remove(self.options.validClass);
-              field.classList.add(self.options.invalidClass);
-              self.showError(field, formGroup, el.msg, 'form__error-block');
-              field.dispatchEvent(new Event('error'));
-              return false;
-            } else {
-              field.classList.remove('is-invalid');
-              if (field.value !== "")
-                field.classList.add('is-valid');
-              else
-                field.classList.remove('is-valid');
-              self.hideError(formGroup, 'form__error-block');
-              return true;
-            }
+      var fieldResult = validationConfig.every(function(el, i) {
+
+        if (el.checkCondition) {
+          var formGroup = closest(field, self.options.formBlockSelector);
+          if (el.validationType) {
+            field.classList.remove(self.options.validClass);
+            field.classList.add(self.options.invalidClass);
+            self.showError(field, formGroup, el.msg, 'form__error-block');
+            field.dispatchEvent(new Event('validate-light-error'));
+            return false;
           } else {
+            field.classList.remove('is-invalid');
+            if (field.value !== "")
+              field.classList.add('is-valid');
+            else
+              field.classList.remove('is-valid');
+            self.hideError(formGroup, 'form__error-block');
             return true;
           }
-
-        });
-
-        if (result)
+        } else {
           return true;
-        else
-          return "break";
+        }
 
-    })
+      });
 
+      if (fieldResult) {
+        result = true;
+        return true;
+      } else {
+        result = false;
+        return "break";
+      }
+
+    });
+
+    if (result) {
+      console.log("SUMBIT!");
+      this.form.submit();
+    }
+
+  },
+
+  setFieldCheck: function (name, check) {
+
+    var self = this;
+
+    if (typeof name !== "string"  || typeof check === "undefined")
+      throw new Error('ValidateLight - You must define a string name and a method for your new validation rule')
+
+    if (check instanceof RegExp) {
+      self.customChecks[name] = function(value) {
+        return self.fieldChecks.regExp(value, check)
+      }
+    } else if (check instanceof Function) {
+      self.customChecks[name] = function(value, field, config) {
+        var result = self.fieldChecks.empty(value)
+        result.hasError = !check(value, field, config);
+        return result;
+      }
+    } else {
+      throw new Error('ValidateLight - Your new validation method is invalid')
+    }
+  
   },
 
   destroy: function destroy() {
@@ -250,7 +307,7 @@ var buildObj = {
     var self = this;
 
     if (typeof formSelector === 'undefined') {
-      throw new Error('ValidateLight - You must define a selector!')
+      throw new Error('ValidateLight - You must define a selector')
     }
 
     self.form = document.querySelector(formSelector);
@@ -263,6 +320,8 @@ var buildObj = {
       tel : self.form.dataset.msgTel
     };
 
+    self.customChecks = {};
+
     if (self.options.validateOnSubmit) {
       self.form.addEventListener('submit', function(e) {
         e.preventDefault();
@@ -273,7 +332,8 @@ var buildObj = {
     // Public exposed methods
     return {
       destroy: self.destroy.bind(self),
-      validate: self.validate.bind(self)
+      validate: self.validate.bind(self),
+      setFieldCheck: self.setFieldCheck.bind(self),
     }
   },
 

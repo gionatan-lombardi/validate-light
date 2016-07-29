@@ -6,43 +6,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Validate Light</title>
     <link rel="stylesheet" href="../css/validate-light.css">
-    <style type="text/css">
-      body {
-        font-family: sans-serif;
-        font-size: 1.2rem;
-      }
-    </style>
   </head>
-  <body>
+  <body class="has-form">
     <h1>Hello, Validate!</h1>
-    <form data-msg-required="Mandatory field", data-msg-email="Insert a valid mail", data-msg-tel="Insert a valid phone number", data-msg-code="Insert a valid product code, only 16 numbers">
+    <form data-msg-required="Mandatory field", data-msg-email="Insert a valid mail", data-msg-tel="Insert a valid phone number", data-msg-code="Insert a valid product code, only 16 numbers" data-msg-model="Insert a valid product model" class="form">
       <div class="form__group">
         <label>
-          Name<br>
+          <p>Name</p>
           <input type="text" name="name" required>
         </label>
       </div>
       <div class="form__group">
         <label>
-          Email<br>
+          <p>Email</p>
           <input type="email" name="email" required>
         </label>
       </div>
       <div class="form__group">
         <label>
-          Phone<br>
+          <p>Phone</p>
           <input type="tel" name="tel">
         </label>
       </div>
       <div class="form__group">
         <label>
-          Code Product<br>
+          <p>Code Product</p>
           <input type="text" name="code" data-validate-code>
         </label>
       </div>
       <div class="form__group">
         <label>
-          Type<br>
+          <p>Product Model</p>
+          <input type="text" name="code" data-validate-model="abc" required>
+        </label>
+      </div>
+      <div class="form__group">
+        <label>
+          <p>Type</p>
           <select name="age" required>
             <option value="">Select</option>
             <option value="foo">Foo</option>
@@ -51,14 +51,56 @@
           </select>
         </label>
       </div>
-      <button type="submit">SUBMIT</button>
+      <div class="form__group">
+        <p>Gender</p>
+        <label>
+          <input type="radio" name="gender" value="male" required> Male
+        </label>
+        <label>
+          <input type="radio" name="gender" value="female"> Female<br>
+        </label>
+      </div>
+      <div class="form__group">
+        <p>Privacy</p>
+        <label>
+          <input type="checkbox" name="privacy" value="1" required> Lorem ipsum Anim Ut sint deserunt esse sunt consequat sit ut dolore Duis ex.
+        </label>
+      </div>
+      <div class="form__group">
+        <button type="submit">SUBMIT</button>
+      </div>
     </form>
     <script src="../src/validate-light.js"></script>
     <script type="text/javascript">
-      validateLight('form');
-      document.querySelector('input[name="name"]').addEventListener('error', function(e) {
+      var vL = validateLight('form', {
+        customFieldChecks: {
+          'happy': /i\'m\shappy/,
+          'sad': function(value, field, config) {
+            field.classList.add('sad-field');
+            if (value === 'sad')
+              return true;
+            else
+              return false;
+          }
+        }
+      });
+      // Listens to form errors
+      document.querySelector('input[name="name"]').addEventListener('validate-light-error', function(e) {
         console.log('Error! ', e);
-      })
+      });
+      // After 3 secs validates the form
+      setTimeout(function() {
+        vL.validate();
+      }, 3000);
+
+      vL.setFieldCheck('code', /^[0-9]{16}$/);
+      vL.setFieldCheck('model', function(value, field, config) {
+        console.log(value, field, config);
+        if (value == config[0])
+          return true;
+        else
+          return false;
+      });
     </script>
   </body>
 </html>

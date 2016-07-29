@@ -1,11 +1,12 @@
 # validate-light
 A simple HTML form validation script manager.
 
-**Important**: This library is still in production. Don't use it!
+**Important**: This library is still in production: don't use it!
 
 ## Borwsers support
-IE11+  
-Firefox 1  
-Chrome 1  
-Safari 1  
-Opera 7
+Chrome 15  
+Firefox 11 
+Safari 6  
+Opera 11.60
+Edge  
+IE11+
