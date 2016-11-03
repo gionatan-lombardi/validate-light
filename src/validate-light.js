@@ -1,5 +1,5 @@
 /*!
- * Validate-light 
+ * Validate-light
  * v1.0.0
  * (https://github.com/gionatan-lombardi/modal-light)
  * Author: Gionatan Lombardi
@@ -14,7 +14,7 @@
 
 /**
  * forEachNode loops over a DOM NodeList
- * and executes a provided function once per HTML element. 
+ * and executes a provided function once per HTML element.
  * @param {NodeList} nodeList - an existing DOM NodeList
  * @param {function} todo - the function to execute once per element
  * @returns {NodeList} the updated NodeList
@@ -103,7 +103,7 @@ function closest(node, selector) {
 var buildObj = {
 
   // Private validation methods
-   
+
   fieldChecks: {
 
     empty: function empty(value) {
@@ -116,7 +116,7 @@ var buildObj = {
       return field;
     },
 
-    regExp: function regExp(value, regExp) {
+    regExp: function regExp(value, r) {
       var field = this.empty(value);
       // If value is empty
       if (field.value == null) {
@@ -125,7 +125,7 @@ var buildObj = {
         return field;
       }
       // Regular expression check
-      var regExpResult = regExp.test(field.value);
+      var regExpResult = r.test(field.value);
       if (!regExpResult) {
         field.hasError = true;
         return field;
@@ -171,7 +171,7 @@ var buildObj = {
   },
 
   // Public Methods
-  
+
   validate: function validate() {
 
     var self = this;
@@ -288,7 +288,7 @@ var buildObj = {
     } else {
       throw new Error('ValidateLight - Your new validation method is invalid')
     }
-  
+
   },
 
   destroy: function destroy() {
