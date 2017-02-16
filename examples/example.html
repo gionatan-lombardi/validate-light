@@ -37,7 +37,7 @@
       <div class="form__group">
         <label>
           <p>Product Model</p>
-          <input type="text" name="code" data-validate-model="abc" required>
+          <input type="text" name="model" data-validate-model="abc" required>
         </label>
       </div>
       <div class="form__group">
@@ -70,9 +70,11 @@
         <button type="submit">SUBMIT</button>
       </div>
     </form>
-    <script src="../src/validate-light.js"></script>
+    <script src="../build/validate-light.min.js"></script>
     <script type="text/javascript">
-      var vL = validateLight('form', {
+      var form = document.querySelector('form');
+      var vL = validateLight(form, {
+        // TODO: custom fields check in config obj
         customFieldChecks: {
           'happy': /i\'m\shappy/,
           'sad': function(value, field, config) {
@@ -85,18 +87,18 @@
         }
       });
       // Listens to form errors
-      document.querySelector('input[name="name"]').addEventListener('validate-light-error', function(e) {
+      document.querySelector('input[name="name"]').addEventListener('validate-light:error', function(e) {
         console.log('Error! ', e);
       });
       // After 3 secs validates the form
       setTimeout(function() {
-        vL.validate();
+        form.validateLight.validate();
       }, 3000);
 
-      vL.setFieldCheck('code', /^[0-9]{16}$/);
-      vL.setFieldCheck('model', function(value, field, config) {
-        console.log(value, field, config);
-        if (value == config[0])
+      vL[0].setFieldCheck('code', /^[0-9]{16}$/);
+      vL[0].setFieldCheck('model', function(value, field, config) {
+        // console.log(value, field, config);
+        if (value === config[0])
           return true;
         else
           return false;
