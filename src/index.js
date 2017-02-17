@@ -1,6 +1,6 @@
 /*!
  * Validate-light
- * v0.1.1
+ * v0.1.0
  * (https://github.com/gionatan-lombardi/modal-light)
  * Author: Gionatan Lombardi
  * Free to use, to change, to destroy...
@@ -85,7 +85,7 @@ function builder(el, builderParams) {
       return field;
     },
 
-    email: value => fieldChecks.regExp(value, /^([a-zA-Z0-9._-]+[a-zA-Z0-9]@[a-zA-Z0-9-]+\.[a-zA-Z.]{2,5})$/),
+    email: value => fieldChecks.regExp(value, /^([a-zA-Z0-9._-]+[a-zA-Z0-9]@[a-zA-Z0-9-]+\.[a-zA-Z.]{2,12})$/),
 
     tel: value => fieldChecks.regExp(value, /^\+?[0-9\.#\-\(\)\*\/\s]*$/),
   };
