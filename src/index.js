@@ -1,6 +1,6 @@
 /*!
  * Validate-light
- * v0.1.0
+ * v0.1.1
  * (https://github.com/gionatan-lombardi/modal-light)
  * Author: Gionatan Lombardi
  * Free to use, to change, to destroy...
@@ -44,10 +44,19 @@ const defaultParams = {
 
 function builder(el, builderParams) {
   const form = el;
+  const fields = form.querySelectorAll('input, textarea, select');
+  const messages = {
+    required: form.getAttribute('data-msg-required'),
+    email: form.getAttribute('data-msg-email'),
+    tel: form.getAttribute('data-msg-tel'),
+  };
+  const customChecks = {};
+
+  form.setAttribute('novalidate', 'novalidate');
 
   // Private validation methods
 
-  form.fieldChecks = {
+  const fieldChecks = {
 
     empty: (value) => {
       value = value.trim();
@@ -60,7 +69,7 @@ function builder(el, builderParams) {
     },
 
     regExp: (value, r) => {
-      const field = form.fieldChecks.empty(value);
+      const field = fieldChecks.empty(value);
       // If value is empty
       if (field.value == null) {
         field.isEmpty = true;
@@ -76,12 +85,12 @@ function builder(el, builderParams) {
       return field;
     },
 
-    email: value => form.fieldChecks.regExp(value, /^([a-zA-Z0-9._-]+[a-zA-Z0-9]@[a-zA-Z0-9-]+\.[a-zA-Z.]{2,5})$/),
+    email: value => fieldChecks.regExp(value, /^([a-zA-Z0-9._-]+[a-zA-Z0-9]@[a-zA-Z0-9-]+\.[a-zA-Z.]{2,5})$/),
 
-    tel: value => form.fieldChecks.regExp(value, /^\+?[0-9\.#\-\(\)\*\/\s]*$/),
+    tel: value => fieldChecks.regExp(value, /^\+?[0-9\.#\-\(\)\*\/\s]*$/),
   };
 
-  // UI validation elements
+  // Public Methods
 
   function showError(field, where, msg, cssClass) {
     let errorBlock = where.querySelector(`.${cssClass}`);
@@ -109,54 +118,50 @@ function builder(el, builderParams) {
     }
   }
 
-  // Public Methods
-
   function validate() {
-    form.fields = form.querySelectorAll('input, textarea, select');
-
-    const result = [].every.call(form.fields, (field) => {
+    const result = [].every.call(fields, (field) => {
       const validationConfig = [
         {
           checkCondition: field.type !== 'checkbox' && field.hasAttribute('required'),
-          validationType: form.fieldChecks.empty(field.value).isEmpty,
-          msg: form.messages.required,
+          validationType: fieldChecks.empty(field.value).isEmpty,
+          msg: messages.required,
         },
         {
           checkCondition: field.type === 'email',
-          validationType: form.fieldChecks.email(field.value).hasError,
-          msg: form.messages.email,
+          validationType: fieldChecks.email(field.value).hasError,
+          msg: messages.email,
         },
         {
           checkCondition: field.type === 'tel',
-          validationType: form.fieldChecks.tel(field.value).hasError,
-          msg: form.messages.tel,
+          validationType: fieldChecks.tel(field.value).hasError,
+          msg: messages.tel,
         },
         {
           checkCondition: field.type === 'checkbox' && field.hasAttribute('required'),
           validationType: !field.checked,
-          msg: form.messages.required,
+          msg: messages.required,
         },
         {
           checkCondition: field.type === 'radio' && field.hasAttribute('required'),
           validationType: !form.querySelector(`input[name="${field.name}"]:checked`),
-          msg: form.messages.required,
+          msg: messages.required,
         },
 
       ];
 
       (function () {
-        for (const k in form.customChecks) {
-          if (Object.prototype.hasOwnProperty.call(form.customChecks, k)) {
+        for (const k in customChecks) {
+          if (Object.prototype.hasOwnProperty.call(customChecks, k)) {
             const dataName = field.getAttribute(`data-validate-${k}`);
             const dataConfig = dataName !== null ? dataName.split(',') : false;
-            form.messages[k] = form.getAttribute(`data-msg-${k}`);
-            if (!form.messages[k]) {
+            messages[k] = form.getAttribute(`data-msg-${k}`);
+            if (!messages[k]) {
               throw new Error(`ValidateLight - You must define an error message for your new "${k}" validation rule. Set it on the form tag adding the data-msg-${k} attribute`);
             }
             validationConfig.push({
               checkCondition: !!dataConfig,
-              validationType: !dataConfig ? false : form.customChecks[k](field.value, field, dataConfig).isEmpty ? false : form.customChecks[k](field.value, field, dataConfig).hasError,
-              msg: form.messages[k],
+              validationType: !dataConfig ? false : customChecks[k](field.value, field, dataConfig).isEmpty ? false : customChecks[k](field.value, field, dataConfig).hasError,
+              msg: messages[k],
             });
           }
         }
@@ -188,6 +193,7 @@ function builder(el, builderParams) {
     });
 
     if (result) {
+      console.log(form);
       form.submit();
     }
   }
@@ -198,10 +204,10 @@ function builder(el, builderParams) {
     }
 
     if (check instanceof RegExp) {
-      form.customChecks[name] = value => form.fieldChecks.regExp(value, check);
+      customChecks[name] = value => fieldChecks.regExp(value, check);
     } else if (check instanceof Function) {
-      form.customChecks[name] = (value, field, config) => {
-        const result = form.fieldChecks.empty(value);
+      customChecks[name] = (value, field, config) => {
+        const result = fieldChecks.empty(value);
         result.hasError = !check(value, field, config);
         return result;
       };
@@ -209,16 +215,6 @@ function builder(el, builderParams) {
       throw new Error('ValidateLight - Your new validation method is invalid');
     }
   }
-
-  form.setAttribute('novalidate', 'novalidate');
-
-  form.messages = {
-    required: form.getAttribute('data-msg-required'),
-    email: form.getAttribute('data-msg-email'),
-    tel: form.getAttribute('data-msg-tel'),
-  };
-
-  form.customChecks = {};
 
   if (builderParams.validateOnSubmit) {
     form.addEventListener('submit', (e) => {
@@ -229,7 +225,10 @@ function builder(el, builderParams) {
 
   // Stores the plugin public exposed methods and properties, directly in the form HTMLElement
   form.validateLight = {
+    fields,
     validate,
+    showError,
+    hideError,
     setFieldCheck: (name, check) => setFieldCheck(name, check),
   };
 
